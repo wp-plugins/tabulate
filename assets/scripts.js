@@ -2,10 +2,22 @@ jQuery(document).ready(function ($) {
 
 
 	/**
+	 * Make sure the WP-API nonce is always set on AJAX requests.
+	 */
+	$.ajaxSetup({
+		headers: { 'X-WP-Nonce': WP_API_Settings.nonce }
+	});
+
+	/**
+	 * Data entry helpers.
+	 */
+	$("input.datepicker").datepicker({ dateFormat: 'yy-mm-dd' });
+
+	/**
 	 * Jump between tables.
 	 */
 	$(".tabulate .quick-jump input").autocomplete({
-		source: WP_API_Settings.root + "/tabulate/tables?_wp_json_nonce=" + WP_API_Settings.nonce,
+		source: WP_API_Settings.root + "/tabulate/tables",
 		select: function( event, ui ) {
 			event.preventDefault();
 			$(this).prop( "disabled", true );

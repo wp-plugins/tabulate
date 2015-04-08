@@ -2,6 +2,8 @@
 
 namespace WordPress\Tabulate\Controllers;
 
+use \WordPress\Tabulate\DB\Grants;
+
 class TableController extends ControllerBase {
 
 	public function index($args) {
@@ -33,6 +35,7 @@ class TableController extends ControllerBase {
 		$template->operators = $table->get_operators();
 		$template->filters = $filters;
 		$template->filter_count = count( $filters );
+		$template->record = $table->get_default_record();
 		$template->records = $table->get_records();
 		$template->record_count = $table->count_records();
 		echo $template->render();
@@ -80,7 +83,7 @@ class TableController extends ControllerBase {
 		$table = $db->get_table( $args['table'] );
 		$template->action = 'import';
 		$template->table = $table;
-		if ( ! $table->current_user_can( \WordPress\Tabulate\DB\Grants::IMPORT ) ) {
+		if ( ! Grants::current_user_can( Grants::IMPORT, $table->get_name() ) ) {
 			$template->add_notice( 'error', 'You do not have permission to import data into this table.' );
 			echo $template->render();
 			return;
@@ -124,7 +127,7 @@ class TableController extends ControllerBase {
 			{
 				// Handle missing columns separately; other column errors are
 				// done in the CSV class.
-				if ( $col->is_required() && ! $col->is_auto_increment() && empty( $_POST['columns'][ $col->get_name() ] ) )
+				if ( $col->is_required() && empty( $_POST['columns'][ $col->get_name() ] ) )
 				{
 					$errors[] = array(
 						'column_name' => '',
