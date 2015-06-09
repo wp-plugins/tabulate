@@ -109,9 +109,12 @@
 
 		<tr>
 			<td></td>
-			<td>
+			<td colspan="2">
 				<p><label>* An asterisk denotes a required field.</label></p>
 				<p>
+					Describe the changes you've made:
+					<input type="text" name="changeset_comment" />
+
 					<input type="submit" value="Save" class="button success" />
 					<!--<a href="{{table.get_url}}" class="button" title="Return to search">Cancel</a>-->
 					{% if record %}
@@ -124,7 +127,44 @@
 	</table>
 </form>
 
+{% if table.has_changes_recorded %}
+<h3>History</h3>
+<table>
+	<caption>Changes made to this record.</caption>
+	<thead>
+		<tr>
+			<th>Date and Time</th>
+			<th>Field</th>
+			<th>Old Value</th>
+			<th></th>
+			<th>New Value</th>
+			<th>User</th>
+			<th>Comment</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for change in record.get_changes %}
+		<tr>
+			<td>
+				<a href="admin.php?page=tabulate&controller=table&action=index&table={{wpdb_prefix}}changesets&filter[0][column]=date_and_time&filter[0][operator]=%3D&filter[0][value]={{change.date_and_time}}">
+				{{change.date_and_time|wp_date_format}}
+				{{change.date_and_time|wp_time_format}}
+				</a>
+			</td>
+			<td>{{change.column_name|titlecase}}</td>
+			<td>{{change.old_value}}</td>
+			<td>&rArr;</td>
+			<td>{{change.new_value}}</td>
+			<td>{{change.user_nicename}}</td>
+			<td>{{change.comment}}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endif %}
+
 {% if table.get_referencing_tables %}
+<h3>Related tables</h3>
 <p>Tables that refer to this table:</p>
 <ul class="referencing-tables">
 

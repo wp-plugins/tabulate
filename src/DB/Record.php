@@ -41,7 +41,6 @@ class Record {
 					// Use title if the FK's title column is also an FK.
 					$fkTitleColName .= self::FKTITLE;
 				}
-				//var_dump( $fkRecord, $fkTitleColName, $fkRecord->$fkTitleColName(), $this->data->$name, $fkTitleCol->is_foreign_key() );
 				return $fkRecord->$fkTitleColName();
 			}
 		}
@@ -108,6 +107,24 @@ class Record {
 			$params['ident'] = $this->get_primary_key();
 		}
 		return admin_url( 'admin.php?' . http_build_query( $params ) );
+	}
+
+	/**
+	 * Get most recent changes.
+	 * @global wpdb $wpdb
+	 * @return array|string
+	 */
+	public function get_changes() {
+		global $wpdb;
+		$sql = "SELECT * "
+			. "FROM {$wpdb->prefix}changes c "
+			. "  JOIN {$wpdb->prefix}changesets cs ON (c.changeset_id=cs.id) "
+			. "  JOIN {$wpdb->prefix}users u ON (u.ID=cs.user_id) "
+			. "WHERE table_name = %s AND record_ident = %s"
+			. "ORDER BY date_and_time DESC "
+			. "LIMIT 15 ";
+		$params = [ $this->table->get_name(), $this->get_primary_key() ];
+		return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
 	}
 
 }

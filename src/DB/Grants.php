@@ -58,6 +58,10 @@ class Grants {
 		update_option( $this->option_name, $grants );
 	}
 
+	public function delete() {
+		delete_option( $this->option_name );
+	}
+
 	/**
 	 * Check that the current user has the requested capability.
 	 *
@@ -95,11 +99,7 @@ class Grants {
 		// Table has grants of this capability; check whether the user has one
 		// of the roles with this capability.
 		$user = wp_get_current_user();
-		//var_dump($user->roles);
-		//var_dump($table_grants[$cap]);
-		//exit();
 		$intersect = array_intersect( $table_grants[$cap], $user->roles );
-		//var_dump($intersect);
 		if ( count( $intersect ) > 0 ) {
 			$all_capabilities[ $cap_full_name ] = true;
 		}
