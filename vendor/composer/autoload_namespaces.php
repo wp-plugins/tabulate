@@ -7,7 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Twig_' => array($vendorDir . '/twig/twig/lib'),
-    'ComponentInstaller' => array($vendorDir . '/robloach/component-installer/src'),
     'CalendR' => array($vendorDir . '/yohang/calendr/src'),
-    'Assetic' => array($vendorDir . '/kriswallsmith/assetic/src'),
 );

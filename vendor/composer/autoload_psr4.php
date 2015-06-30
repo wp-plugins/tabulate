@@ -7,5 +7,4 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'WordPress\\Tabulate\\' => array($baseDir . '/src'),
-    'Symfony\\Component\\Process\\' => array($vendorDir . '/symfony/process'),
 );
