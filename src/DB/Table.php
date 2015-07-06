@@ -81,10 +81,10 @@ class Table {
 	/**
 	 * Create a new database table object.
 	 *
-	 * @param Database The database to which this table belongs.
+	 * @param \WordPress\Tabulate\DB\Database $database The database to which this table belongs.
 	 * @param string $name The name of the table.
 	 */
-	public function __construct($database, $name) {
+	public function __construct( $database, $name ) {
 		$this->database = $database;
 		$this->name = $name;
 
@@ -98,9 +98,9 @@ class Table {
 
 	/**
 	 * Add a filter.
-	 * @param type $column
-	 * @param type $operator
-	 * @param type $value
+	 * @param string $column
+	 * @param string $operator
+	 * @param string $value
 	 * @param boolean $force Whether to transform the value, for FKs.
 	 */
 	public function add_filter($column, $operator, $value, $force = false) {
@@ -127,7 +127,7 @@ class Table {
 	/**
 	 * Add multiple filters.
 	 */
-	public function add_filters($filters) {
+	public function add_filters( $filters ) {
 		foreach ( $filters as $filter ) {
 			$column = (isset( $filter['column'] )) ? $filter['column'] : false;
 			$operator = (isset( $filter['operator'] )) ? $filter['operator'] : false;
@@ -164,7 +164,7 @@ class Table {
 
 			// Filters on foreign keys need to work on the FKs title column.
 			$column = $this->columns[$f_column];
-			if ( $column->is_foreign_key() && !$filter['force'] ) {
+			if ( $column->is_foreign_key() && ! $filter['force'] ) {
 				$join = $this->join_on( $column );
 				$f_column = $join['column_alias'];
 				$join_clause .= $join['join_clause'];
@@ -290,7 +290,7 @@ class Table {
 	 * allows column names to begin with a number, but PHP does not variables to
 	 * do so.
 	 *
-	 * @return array|Record The row data
+	 * @return Record[] The row data
 	 */
 	public function get_records($with_pagination = true, $save_sql = false) {
 		$columns = array();
@@ -459,7 +459,7 @@ class Table {
 	/**
 	 * Get a list of permitted operators.
 	 *
-	 * @return array[string]=>string List of operators.
+	 * @return string[] List of operators.
 	 */
 	public function get_operators() {
 		return $this->operators;
@@ -575,7 +575,7 @@ class Table {
 	 * Get a list of this table's columns, optionally constrained by their type.
 	 *
 	 * @param string $type Only return columns of this type.
-	 * @return array|Column This table's columns.
+	 * @return Column[] This table's columns.
 	 */
 	public function get_columns($type = null) {
 		if ( is_null( $type ) ) {
@@ -673,7 +673,7 @@ class Table {
 	 * This does <em>not</em> take into account a user's permissions (i.e. the
 	 * name of a table which the user is not allowed to read may be returned).
 	 *
-	 * @return array[string => string] The list of <code>column_name => table_name</code> pairs.
+	 * @return string[] The list of <code>column_name => table_name</code> pairs.
 	 */
 	public function get_referenced_tables($instantiate = false) {
 
@@ -703,7 +703,7 @@ class Table {
 	/**
 	 * Get tables with foreign keys referring here.
 	 *
-	 * @return array|Table
+	 * @return Table[]
 	 */
 	public function get_referencing_tables() {
 		$out = array();
@@ -714,7 +714,7 @@ class Table {
 			foreach ( $foreignTables as $foreign_column => $referenced_table_name ) {
 				// If this table is a referenced table, collect the table from which it's referenced.
 				if ( $referenced_table_name == $this->get_name() ) {
-					$out[$foreign_column] = $table; //array('table' => $table, 'column' => $foreign_column);
+					$out[$foreign_column] = $table;
 				}
 			}
 		}
@@ -724,7 +724,7 @@ class Table {
 	/**
 	 * Get a list of the names of the foreign keys in this table.
 	 *
-	 * @return array[string] Names of foreign key columns in this table.
+	 * @return string[] Names of foreign key columns in this table.
 	 */
 	public function get_foreign_key_names() {
 		return array_keys( $this->get_referenced_tables( false ) );
