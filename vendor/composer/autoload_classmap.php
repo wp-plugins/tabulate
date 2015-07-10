@@ -7,5 +7,4 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'TestBase' => $baseDir . '/tests/TestBase.php',
-    'geoPHP' => $vendorDir . '/phayes/geophp/geoPHP.inc',
 );
