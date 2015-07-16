@@ -129,5 +129,52 @@ jQuery(document).ready(function ($) {
 		$boxen.prop("checked", $(this).prop("checked")).change();
 	});
 
+
+	/**
+	 * Enable point-selection for the editing form field.
+	 */
+	$(".tabulate-record .point-column").each(function() {
+		var $formField = $(this).find(":input");
+		var attrib = 'Map data &copy; <a href="http://openstreetmap.org">OSM</a> contributors <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
+		var centre = [-32.05454466592707, 115.74644923210144]; // Fremantle!
+		var map = L.map($(this).attr("id")+"-map").setView(centre, 16);
+		L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: attrib }).addTo(map);
+		var marker;
+
+		// If already has a value.
+		if ($formField.val()) {
+			omnivore.wkt.parse($formField.val()).eachLayer(function(m) {
+//				console.log("parsed marker ");
+				console.log(m.getLatLng());
+//				marker = L.marker(m.getLatLng(), { clickable:true, draggable:true }).addTo(map);
+//				map.setView(marker.getLatLng());
+//				map.setZoom(18);
+				addMarker(m.getLatLng());
+				marker.update();
+				//console.log(marker);
+			});
+		}
+		// On click. Dragging is handled below.
+		map.on('click', function(e) {
+			addMarker(e.latlng);
+		});
+		// Add a marker at the specified location.
+		function addMarker(latLng) {
+			if (map.hasLayer(marker)) {
+				map.removeLayer(marker);
+			}
+			marker = L.marker(latLng, { clickable:true, draggable:true });
+			marker.on("add", recordNewCoords).on("dragend", recordNewCoords);
+			marker.addTo(map);
+			map.panTo(marker.getLatLng());
+			//console.log("Marker added.");
+		}
+		function recordNewCoords(e) {
+			var wkt = "POINT("+marker.getLatLng().lng+" "+marker.getLatLng().lat+")";
+			console.log("changing recorded point: "+wkt);
+			$formField.val(wkt);
+		}
+	});
+
 });
 

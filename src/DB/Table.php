@@ -293,13 +293,8 @@ class Table {
 	 * @return Record[] The row data
 	 */
 	public function get_records($with_pagination = true, $save_sql = false) {
-		$columns = array();
-		foreach ( array_keys( $this->columns ) as $col ) {
-			$columns[] = "`$this->name`.`$col`";
-		}
-
 		// Build basic SELECT statement.
-		$sql = 'SELECT ' . join( ',', $columns ) . ' FROM `' . $this->get_name() . '`';
+		$sql = 'SELECT ' . $this->columns_sql_select() . ' FROM `' . $this->get_name() . '`';
 
 		// Ordering.
 		if ($this->get_order_by()) {
@@ -361,6 +356,23 @@ class Table {
 	}
 
 	/**
+	 * Get the SQL for SELECTing all columns in this table.
+	 * @return string
+	 */
+	private function columns_sql_select() {
+		$select = array();
+		$table_name = $this->get_name();
+		foreach ( $this->get_columns() as $col_name => $col ) {
+			if ( $col->get_type() == 'point' ) {
+				$select[] = "AsText(`$table_name`.`$col_name`) AS `$col_name`";
+			} else {
+				$select[] = "`$table_name`.`$col_name`";
+			}
+		}
+		return join( ', ', $select );
+	}
+
+	/**
 	 * Get a single record as an associative array.
 	 *
 	 * @param string $pk_val The value of the PK of the record to get.
@@ -368,10 +380,10 @@ class Table {
 	 */
 	public function get_record($pk_val) {
 		$pk_column = $this->get_pk_column();
-		if ( !$pk_column ) {
+		if ( ! $pk_column ) {
 			return false;
 		}
-		$sql = "SELECT `" . join( '`, `', array_keys( $this->get_columns() ) ) . "` "
+		$sql = "SELECT " . $this->columns_sql_select() . " "
 				. "FROM `" . $this->get_name() . "` "
 				. "WHERE `" . $pk_column->get_name() . "` = %s "
 				. "LIMIT 1";
@@ -557,13 +569,8 @@ class Table {
 		$wpdb->query( $sql );
 		// Make sure it exported.
 		if ( ! file_exists( $filename ) ) {
-			$msg = "<p>Unable to create temporary export file:<br /><code>$filename</code></p>";
-			if ( WP_DEBUG ) {
-				$msg .= "<h2>Debug info:</h2>"
-					. "<p>Error was: " . $wpdb->last_error . "</p>"
-					. "<p>Query was:</p><pre>$sql</pre>";
-			}
-			wp_die( $msg, "Export failed", array( 'back_link' => true ) );
+			$msg = "Unable to create temporary export file:<br /><code>$filename</code>";
+			Exception::wp_die($msg, "Export failed", $wpdb->last_error, $sql);
 		}
 		$wpdb->show_errors();
 		// Give the filename back to the controller, to send to the client.
@@ -854,6 +861,7 @@ class Table {
 		/*
 		 * Go through all data and clean it up before saving.
 		 */
+		$sql_values = array();
 		foreach ( $data as $field => $value ) {
 			// Make sure this column exists in the DB.
 			if ( !isset( $columns[$field] ) ) {
@@ -862,21 +870,51 @@ class Table {
 			}
 			$column = $this->get_column($field);
 
+			// Auto-incrementing columns.
+			if ( $column->is_auto_increment() ) {
+				// Don't set $sql_values item.
+			}
+
 			// Boolean values.
-			if ( $column->is_boolean() ) {
+			elseif ( $column->is_boolean() ) {
 				$zeroValues = array( 0, '0', false, 'false', 'FALSE', 'off', 'OFF', 'no', 'NO' );
-				if ( ($value === null || $value === '') && $column->nullable() ) {
-					$data[$field] = null;
+				if ( ( $value === null || $value === '') && $column->nullable() ) {
+					$data[ $field ] = null;
+					$sql_values[ $field ] = 'NULL';
 				} elseif ( in_array( $value, $zeroValues, true ) ) {
-					$data[$field] = false;
+					$data[ $field ] = false;
+					$sql_values[ $field ] = '0';
 				} else {
-					$data[$field] = true;
+					$data[ $field ] = true;
+					$sql_values[ $field ] = '1';
 				}
 			}
 
 			// Empty strings.
-			if ( ! $column->allows_empty_string() && '' === $value && $column->nullable() ) {
+			elseif ( ! $column->allows_empty_string() && '' === $value && $column->nullable() ) {
 				$data[ $field ] = null;
+				$sql_values[ $field ] = 'NULL';
+			}
+
+			// Nulls
+			elseif ( is_null( $value ) && $column->nullable() ) {
+				$data[ $field ] = null;
+				$sql_values[ $field ] = 'NULL';
+			}
+
+			// POINT columns.
+			elseif ( $column->get_type() == 'point' ) {
+				$sql_values[ $field ] = "GeomFromText('" . esc_sql( $value ) ."')";
+			}
+
+			// Numeric values.
+			elseif ( $column->is_numeric() ) {
+				$sql_values[ $field ] = $value;
+			}
+
+			// Everything else.
+			else {
+				$sql_values[ $field ] = "'" . esc_sql( $value ) ."'";
 			}
 		}
 
@@ -888,14 +926,7 @@ class Table {
 		// This is a workaround for NULL support in $wpdb->update() and $wpdb->insert().
 		// Can probably be removed when https://core.trac.wordpress.org/ticket/15158 is resolved.
 		$set_items = array();
-		foreach ( $data as $field => $datum ) {
-			if ( is_null( $datum ) ) {
-				$escd_datum = 'NULL';
-			} elseif ( is_numeric( $datum ) ) {
-				$escd_datum = $datum;
-			} else {
-				$escd_datum = "'" . esc_sql( $datum ) ."'";
-			}
+		foreach ( $sql_values as $field => $escd_datum ) {
 			$set_items[] = "`$field` = $escd_datum";
 		}
 		$set_clause = 'SET ' . join( ', ', $set_items );
@@ -921,9 +952,10 @@ class Table {
 			if ( ! Grants::current_user_can( Grants::CREATE, $this->get_name() ) ) {
 				throw new \Exception( 'You do not have permission to insert records into this table.' );
 			}
-			$this->database->get_wpdb()->query( 'INSERT INTO ' . $this->get_name() . " $set_clause;" );
+			$sql = 'INSERT INTO ' . $this->get_name() . ' ' . $set_clause . ';';
+			$this->database->get_wpdb()->query( $sql );
 			if ( ! empty( $this->database->get_wpdb()->last_error ) ) {
-				throw new Exception( $this->database->get_wpdb()->last_error );
+				Exception::wp_die( 'The record was not created.', 'Unable to create record', $this->database->get_wpdb()->last_error, $sql );
 			}
 			$new_pk_value = $this->database->get_wpdb()->insert_id;
 
