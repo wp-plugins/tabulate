@@ -957,7 +957,11 @@ class Table {
 			if ( ! empty( $this->database->get_wpdb()->last_error ) ) {
 				Exception::wp_die( 'The record was not created.', 'Unable to create record', $this->database->get_wpdb()->last_error, $sql );
 			}
-			$new_pk_value = $this->database->get_wpdb()->insert_id;
+			if ( $this->get_pk_column()->is_auto_increment() ) {
+				$new_pk_value = $this->database->get_wpdb()->insert_id;
+			} elseif ( isset( $data[ $pk_name ] ) ) {
+				$new_pk_value = $data[ $pk_name ];
+			}
 
 		}
 		$new_record = $this->get_record( $new_pk_value );
@@ -972,15 +976,15 @@ class Table {
 		return $new_record;
 	}
 
-	public function get_url($action = 'index', $merge_existing = false, $controller = 'table') {
+	public function get_url( $action = 'index', $extra_params = false, $controller = 'table' ) {
 		$params = array(
 			'page' => 'tabulate',
 			'controller' => $controller,
 			'action' => $action,
 			'table' => $this->get_name(),
 		);
-		if ( $merge_existing ) {
-			$params = array_merge( $_GET, $params );
+		if ( $extra_params !== false ) {
+			$params = array_merge( $_GET, $params, $extra_params );
 		}
 		return admin_url( 'admin.php?' . http_build_query( $params ) );
 	}
