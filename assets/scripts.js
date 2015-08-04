@@ -88,6 +88,28 @@ jQuery(document).ready(function ($) {
 		$lastrow.after($newrow);
 	});
 
+	/**
+	 * Change 'is one of' filters to multi-line text input box.
+	 */
+	$(".tabulate-filters").on("change", "select[name*='operator']", function(){
+		var $oldFilter = $(this).parents("tr").find("[name*='value']");
+		var newType = $oldFilter.is("input") ? "textarea" : "input";
+		var requiresMulti = ($(this).val() === 'in' || $(this).val() === 'not in');
+		var $newFilter = $("<"+newType+" name='"+$oldFilter.attr("name")+"'/>");
+		$newFilter.val($oldFilter.val());
+
+		if ($oldFilter.is("input") && requiresMulti) {
+			// If changing TO a multi-line value.
+			$newFilter.attr("rows", 2);
+			$oldFilter.replaceWith($newFilter);
+
+		} else if ($oldFilter.is("textarea") && !requiresMulti) {
+			// If changing AWAY FROM a multi-line value.
+			$newFilter.attr("type", "text");
+			$oldFilter.replaceWith($newFilter);
+
+		}
+	});
 
 	/**
 	 * Add 'select all' checkboxen to the grants' table.
