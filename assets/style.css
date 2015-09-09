@@ -12,7 +12,9 @@ form.tabulate-grants tr.select-all td { border-width:0 0 1px 0 }
 form.tabulate-grants td.select-all { border-width:0 1px }
 form.tabulate-grants tr.select-all td.label { border-width:0 0 0 1px; vertical-align:middle; text-align:center; font-size:larger }
 
-form.tabulate-record input.datepicker { width:9em }
+form.tabulate-record input.column-type-date,
+form.tabulate-record input.column-type-datetime,
+form.tabulate-record input.column-type-time { position:relative; z-index:100; width:15em }
 form.tabulate-record th.column-title { vertical-align:top; text-align:left }
 form.tabulate-record .foreign-key label { text-align:left }
 form.tabulate-record .foreign-key input.form-control { width:83% }
@@ -38,7 +40,17 @@ form.tabulate-record .point-column .map { width:450px; height:200px; border:1px 
 .tabulate.wrap .import .stages dd.selected { border-bottom:2px solid #CCC; background-color:#CCC }
 .tabulate.wrap .import .required { color:#a94442 }
 
-.tabulate.wrap .quick-jump { float:right }
+.tabulate.wrap .quick-jump { position:absolute; right:2em; list-style-type:none; border:1px outset black;
+	background-color:white; padding:0.35em; width:20em; z-index:100 }
+.tabulate.wrap .quick-jump li { margin:0 }
+.tabulate.wrap .quick-jump input { display:none; width:100% }
+.tabulate.wrap .quick-jump li.filter { float:none; display:list-item; margin:0 }
+.tabulate.wrap .quick-jump li.filter label { display:block; text-align:right }
+.tabulate.wrap .quick-jump li.filter .text { float:left }
+.tabulate.wrap .quick-jump.expanded li { display:list-item }
+.tabulate.wrap .quick-jump.expanded input { display:block }
+.tabulate.wrap .quick-jump a { text-decoration:none; display:block }
+.tabulate.wrap .quick-jump a:hover { background-color:highlight; color:highlighttext }
 
 .tabulate.wrap table.calendar th { width:14% }
 .tabulate.wrap table.calendar td { border:1px solid #e1e1e1 }
