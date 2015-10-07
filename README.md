@@ -38,7 +38,7 @@ Features (in no particular order):
     value for the Primary Key, the existing row will be overwritten.
 4.  Data can be exported to CSV, including after filters have been applied. 
 5.  A quick-jump navigation box (located top right of every page) can be
-    activated by installing the [WP REST API](https://wordpress.org/plugins/json-rest-api/)
+    activated by installing the [WordPress REST API (Version 2)](https://wordpress.org/plugins/rest-api/)
     plugin. The quick-jump box is also added as a Dashboard widget.
 6.  Records in tables with *date* columns can be viewed in a calendar.
 7.  Entity Relationship Diagrams (drawn with [GraphViz](http://graphviz.org/))
@@ -76,6 +76,9 @@ When upgrading, please *deactivate* and then *reactivate* the plugin. This will
 ensure that all required database updates are carried out (but will avoid the
 overhead of checking whether these are required on every Tabulate page load).
 
+After version 2.0.0 you must switch to version 2 of the Rest API plugin (`rest-api`).
+Remove the older one (`json-rest-api`).
+
 ## Frequently Asked Questions
 
 ### How does one use the shortcode?
@@ -86,12 +89,15 @@ which can be used to add tables, lists, data-entry forms, and record-counts to
 your content. Its parameters (which can appear in any order) are as follows:
 
 1. `table` — The name of the table in question. Required. No default.
-2. `format` — One of `table`, `list`, `form`, or `count`. Optional. Defaults to `table`.
+2. `format` — One of `table`, `list`, `form`, `count`, or `record`. Optional. Defaults to `table`.
 
 Do note that if a table is not accessible to the browsing user then nothing will
-be displayed. (This currently means that anonymous users can not view any
-Tabulate data, because there is no way to grant them access; this will be fixed
-soon.)
+be displayed.
+
+When using the `record` format, the primary key of the record to display will be
+taken from the URL parameter that is the table's name
+(e.g. `[tabulate table=widgets format=record]` will look for `?widgets=45`
+and display the record with a primary key value of `45`).
 
 ### Where should issues be reported?
 
@@ -134,14 +140,15 @@ with it please see
 
 ## Changelog
 
-This is a chronologically ordered list of major changes to Tabulate.
+This is a reverse-chronologically ordered list of breaking changes to Tabulate.
 A full list of all changes can be found at https://github.com/tabulate/tabulate/commits/master
 
-* March to July 2015: Pre-release development.
-* July 2015: Version 1.0.0 released, with basic functionality and after having
+* October 2015: Version 2, switching to version 2 of the WP-API plugin.
+* July 2015: Version 1, with basic functionality and after having
   been run for some months in a production environment by the plugin author.
+* March to July 2015: Pre-release development.
 
-Prior to version 1, changes were listed here (there were too many of them, and
+Prior to version 1, no changes were listed here (there were too many of them, and
 nothing was stable yet).
 
 ## Upgrade Notice

@@ -14,6 +14,7 @@ class Twig_Tests_EnvironmentTest extends PHPUnit_Framework_TestCase
     /**
      * @expectedException        LogicException
      * @expectedExceptionMessage You must set a loader first.
+     * @group legacy
      */
     public function testRenderNoLoader()
     {
@@ -137,17 +138,28 @@ class Twig_Tests_EnvironmentTest extends PHPUnit_Framework_TestCase
         */
     }
 
+    public function testCompileSourceInlinesSource()
+    {
+        $twig = new Twig_Environment($this->getMock('Twig_LoaderInterface'));
+
+        $source = "<? */*foo*/ ?>\r\nbar\n";
+        $expected = "/* <? *//* *foo*//*  ?>*/\n/* bar*/\n/* */\n";
+        $compiled = $twig->compileSource($source, 'index');
+
+        $this->assertContains($expected, $compiled);
+        $this->assertNotContains('/**', $compiled);
+    }
+
     public function testExtensionsAreNotInitializedWhenRenderingACompiledTemplate()
     {
-        $options = array('cache' => sys_get_temp_dir().'/twig', 'auto_reload' => false, 'debug' => false);
+        $cache = new Twig_Cache_Filesystem($dir = sys_get_temp_dir().'/twig');
+        $options = array('cache' => $cache, 'auto_reload' => false, 'debug' => false);
 
         // force compilation
         $twig = new Twig_Environment($loader = new Twig_Loader_Array(array('index' => '{{ foo }}')), $options);
-        $cache = $twig->getCacheFilename('index');
-        if (!is_dir(dirname($cache))) {
-            mkdir(dirname($cache), 0777, true);
-        }
-        file_put_contents($cache, $twig->compileSource('{{ foo }}', 'index'));
+
+        $key = $cache->generateKey('index', $twig->getTemplateClass('index'));
+        $cache->write($key, $twig->compileSource('{{ foo }}', 'index'));
 
         // check that extensions won't be initialized when rendering a template that is already in the cache
         $twig = $this
@@ -163,7 +175,7 @@ class Twig_Tests_EnvironmentTest extends PHPUnit_Framework_TestCase
         $output = $twig->render('index', array('foo' => 'bar'));
         $this->assertEquals('bar', $output);
 
-        unlink($cache);
+        unlink($key);
     }
 
     public function testAddExtension()
@@ -182,6 +194,9 @@ class Twig_Tests_EnvironmentTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('Twig_Tests_EnvironmentTest_NodeVisitor', get_class($visitors[2]));
     }
 
+    /**
+     * @group legacy
+     */
     public function testRemoveExtension()
     {
         $twig = new Twig_Environment($this->getMock('Twig_LoaderInterface'));
