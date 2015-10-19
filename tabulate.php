@@ -6,9 +6,9 @@
  * Author URI: http://samwilson.id.au/
  * License: GPL-2.0+
  * Text Domain: tabulate
- * Version: 2.1.0
+ * Version: 2.2.0
  */
-define( 'TABULATE_VERSION', '2.1.0' );
+define( 'TABULATE_VERSION', '2.2.0' );
 define( 'TABULATE_SLUG', 'tabulate' );
 
 // Make sure Composer has been set up (for installation from Git, mostly).
@@ -31,8 +31,9 @@ $menus->init();
 // Add grants-checking callback.
 add_filter( 'user_has_cap', '\\WordPress\\Tabulate\\DB\\Grants::check', 0, 3 );
 
-// Activation for the ChangeTracker. (Uninstall is handled by uninstall.php.)
+// Activation hooks. (Uninstall is handled by uninstall.php.)
 register_activation_hook( __FILE__, '\\WordPress\\Tabulate\\DB\\ChangeTracker::activate' );
+register_activation_hook( __FILE__, '\\WordPress\\Tabulate\\DB\\Reports::activate' );
 
 // Register JSON API.
 add_action( 'rest_api_init', function() {
